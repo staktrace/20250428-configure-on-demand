@@ -1,27 +1,24 @@
-| :memo: | There is a matching reproducer for the Groovy DSL [here](https://github.com/gradle/gradle-issue-reproducer/tree/groovy-dsl) |
-|---|---|
+This is a fork of the [gradle issue reproducer](https://github.com/gradle/gradle-issue-reproducer) to demonstrate what appears to be a bug with configure-on-demand
 
-# Gradle issue reproducer
+# Step to repro
 
-This is a template repository to create reproducer projects for Gradle issues.
-The template contains a GitHub Action definition that runs a Gradle build upon each code change.
-To quickly learn how it works, check the following screencast:
+1. `./gradlew test-project:sub-project:integrationTest`
 
-https://user-images.githubusercontent.com/419883/147940456-d0c96c90-f2b5-4574-8133-09647db9545a.mov
+# Expected result
 
-## How to use the template
+- The task runs successfully
 
-- Fork this repository
-  - On the main page, click the `Use this Template` button
-  - Specify the user/org name and a repository name
-  - Select `Public` for repository type
-  - Select `Include all branches`
-  - Click `Create Repository from template`
-- Modify the project in the repository to reproduce the issue
-  - You can clone your new forked repository locally and push changes, as usual
-  - You can also edit your reproducer in an online editor by replacing `github.com` with `github.dev` in the URL (or by pressing the '.' key on the keyboard).
-- Adjust the [GitHub Action file](.github/workflows/run-reproducer.yml)
-  - You can configure the executed Gradle tasks as well as the environment (task options, log level, JVM version, operating system, etc)
-  - The documentation for the Gradle GitHub Action is available [here](https://github.com/gradle/actions/blob/main/docs/setup-gradle.md)
-- Verify that the reproducer exhibits the problem on the [GitHub Action page](https://github.com/gradle/gradle-issue-reproducer/actions)
-- Link your reproducer to the issue
+# Actual result
+
+- The task fails with this:
+
+```
+* What went wrong:
+Could not determine the dependencies of task ':test-project:sub-project:integrationTest'.
+> A problem occurred configuring project ':dep-project:service'.
+   > org.gradle.api.internal.initialization.DefaultClassLoaderScope@ebe1be8 must be locked before it can be used to compute a classpath!
+```
+
+# Notes
+
+Inside `test-project/sub-project/build.gradle.kts` there are two task dependencies. The uncommented one produces an error, the commented one does not. The two tasks are identical, the only difference is that one is in a "deeper" project (`:foo:bar`) while the other one is in a shallower project (`:foo`). Why should this matter? I dunno, but it seems like a gradle bug.
